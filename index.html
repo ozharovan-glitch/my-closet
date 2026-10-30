@@ -1,0 +1,199 @@
+<!DOCTYPE html>  <html lang="ru">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>MY CLOSET</title>  
+<style>  
+*{box-sizing:border-box}  
+body{margin:0;font-family:Arial,sans-serif;background:#f5f2ee;color:#282522}  
+header{background:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;border-bottom:1px solid #e5ded6}  
+.logo{font-size:24px;font-weight:bold;letter-spacing:3px}  
+nav{display:flex;gap:7px;flex-wrap:wrap}  
+button{cursor:pointer;border:0;padding:11px 14px;border-radius:10px;background:#e8dfd5;color:#282522}  
+button:hover{background:#d6c5b4}  
+main{max-width:1100px;margin:auto;padding:25px 18px}  
+.hero{display:flex;align-items:center;gap:25px;background:#e7ddd2;padding:30px;border-radius:20px;margin-bottom:30px}  
+.hero div{flex:1}  
+.hero h1{font-size:40px}  
+.hero img{width:45%;height:280px;object-fit:cover;border-radius:15px}  
+input,select{width:100%;padding:12px;border:1px solid #ddd2c7;border-radius:10px;background:white}  
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}  
+.card{background:white;border-radius:15px;overflow:hidden;position:relative}  
+.card img{width:100%;height:210px;object-fit:cover;background:#e8dfd5}  
+.info{padding:12px}  
+.info h3{font-size:16px}  
+.info p{font-size:13px;color:#81776e}  
+.actions{display:flex;gap:6px;flex-wrap:wrap}  
+.actions button{padding:8px;font-size:12px}  
+.heart{position:absolute;right:9px;top:9px;background:white;font-size:19px;padding:6px 10px}  
+.liked{color:#c34c59}  
+.toolbar{display:flex;gap:10px;margin:20px 0}  
+.toolbar input{flex:1}  
+.panel{max-width:430px;margin:35px auto;background:white;padding:28px;border-radius:20px}  
+.panel h1{margin-top:0}  
+.panel form{display:grid;gap:13px}  
+.panel p{color:#81776e;line-height:1.5;font-size:13px}  
+.primary{background:#282522;color:white}  
+.empty{grid-column:1/-1;background:white;border-radius:15px;text-align:center;padding:35px;color:#81776e}  
+footer{text-align:center;padding:25px;color:#81776e;font-size:13px}  
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hero h1{font-size:30px}}  
+@media(max-width:500px){header{padding:15px}.hero{padding:20px;flex-direction:column;align-items:stretch}.hero img{width:100%;height:210px}.hero h1{font-size:30px}.grid{gap:10px}.card img{height:170px}.toolbar{flex-wrap:wrap}nav button{padding:9px;font-size:12px}}  
+</style>  
+</head>  
+<body>  
+<header>  
+  <div class="logo">MY CLOSET.</div>  
+  <nav id="nav"></nav>  
+</header>  
+<main id="app"></main>  
+<footer>MY CLOSET. — твой стиль, твои правила.</footer>  <script>  
+const starter=[  
+{id:1,name:"Белая футболка",category:"Верх",color:"Белый",image:"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=500&q=80",favorite:false},  
+{id:2,name:"Голубые джинсы",category:"Низ",color:"Голубой",image:"https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=500&q=80",favorite:false},  
+{id:3,name:"Бежевый жакет",category:"Верх",color:"Бежевый",image:"https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=500&q=80",favorite:true},  
+{id:4,name:"Белые кроссовки",category:"Обувь",color:"Белый",image:"https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80",favorite:false},  
+{id:5,name:"Чёрная сумка",category:"Аксессуары",color:"Чёрный",image:"https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=500&q=80",favorite:false},  
+{id:6,name:"Серый свитер",category:"Верх",color:"Серый",image:"https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=500&q=80",favorite:false}  
+];  
+  
+let users=read("closetUsers",[]);  
+let currentUser=read("closetCurrentUser",null);  
+let clothes=read("closetClothes",null)||starter.map(x=>({...x}));  
+let page="home";  
+  
+function read(key,fallback){  
+ try{const v=localStorage.getItem(key);return v===null?fallback:JSON.parse(v)}  
+ catch(e){return fallback}  
+}  
+function save(key,value){localStorage.setItem(key,JSON.stringify(value))}  
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}  
+  
+function nav(){  
+ const n=document.getElementById("nav");  
+ n.innerHTML=`  
+ <button onclick="showPage('home')">Главная</button>  
+ ${currentUser?`  
+ <button onclick="showPage('wardrobe')">Гардероб</button>  
+ <button onclick="showPage('favorites')">Избранное ♥</button>  
+ <button onclick="showPage('profile')">Профиль</button>  
+ <button onclick="logout()">Выйти</button>  
+ `:`<button onclick="showPage('login')">Войти</button>  
+ <button onclick="showPage('register')">Регистрация</button>`}`;  
+}  
+function showPage(p){page=p;render();window.scrollTo(0,0)}  
+function card(x){return `<article class="card">  
+<button class="heart ${x.favorite?'liked':''}" onclick="favorite(${x.id})">${x.favorite?'♥':'♡'}</button>  
+<img src="${esc(x.image)}" alt="${esc(x.name)}" onerror="this.onerror=null;this.src='https://placehold.co/500x600/e8dfd5/665c53?text=Clothing'">  
+<div class="info"><h3>${esc(x.name)}</h3><p>${esc(x.category)} · ${esc(x.color)}</p>  
+<div class="actions"><button onclick="details(${x.id})">Подробнее</button>  
+${currentUser?`<button onclick="removeItem(${x.id})">Удалить</button>`:""}</div></div></article>`}  
+function grid(arr){return arr.length?arr.map(card).join(""):'<div class="empty">Здесь пока пусто.</div>'}  
+  
+function render(){  
+ nav();  
+ const app=document.getElementById("app");  
+ if(page==="home"){  
+ app.innerHTML=`<section class="hero"><div><p>ТВОЙ ЛИЧНЫЙ ГАРДЕРОБ</p>  
+ <h1>Найди свой<br>уникальный стиль.</h1>  
+ <p>Собирай любимые вещи, сохраняй их и создавай новые образы.</p>  
+ <button class="primary" onclick="showPage('${currentUser?'wardrobe':'register'}')">${currentUser?'Открыть гардероб →':'Создать аккаунт →'}</button>  
+ </div><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80" alt="Стиль"></section>  
+ <h2>Идеи для гардероба</h2><div class="grid">${grid(clothes.slice(0,4))}</div>`;  
+ }  
+ if(page==="register"||page==="login"){  
+ const reg=page==="register";  
+ app.innerHTML=`<section class="panel"><h1>${reg?'Создать аккаунт':'С возвращением!'}</h1>  
+ <p>${reg?'Зарегистрируйся, чтобы сохранять свой гардероб.':'Войди в свой аккаунт MY CLOSET.'}</p>  
+ <form id="authForm">  
+ ${reg?'<input name="name" placeholder="Твоё имя" required maxlength="50">':''}  
+ <input name="email" type="email" placeholder="Email" required>  
+ <input name="password" type="password" placeholder="Пароль (минимум 6 символов)" minlength="6" required>  
+ <button class="primary" type="submit">${reg?'Зарегистрироваться':'Войти'}</button>  
+ </form>  
+ <p>Демонстрационная версия: данные хранятся только в этом браузере. Не используй настоящий пароль.</p>  
+ <button onclick="showPage('${reg?'login':'register'}')">${reg?'Уже есть аккаунт? Войти':'Нет аккаунта? Регистрация'}</button>  
+ </section>`;  
+ document.getElementById("authForm").addEventListener("submit",auth);  
+ }  
+ if(page==="wardrobe"){  
+ if(!currentUser){showPage("login");return}  
+ app.innerHTML=`<h1>Мой гардероб</h1><button class="primary" onclick="addItem()">＋ Добавить вещь</button>  
+ <div class="toolbar"><input id="search" placeholder="Поиск одежды..." oninput="filterItems()">  
+ <select id="category" onchange="filterItems()"><option>Все</option><option>Верх</option><option>Низ</option><option>Обувь</option><option>Аксессуары</option></select></div>  
+ <div class="grid" id="clothingGrid">${grid(clothes)}</div>`;  
+ }  
+ if(page==="favorites"){  
+ if(!currentUser){showPage("login");return}  
+ app.innerHTML=`<h1>Избранное ♥</h1><div class="grid">${grid(clothes.filter(x=>x.favorite))}</div>`;  
+ }  
+ if(page==="profile"){  
+ if(!currentUser){showPage("login");return}  
+ app.innerHTML=`<section class="panel"><h1>Мой профиль</h1><p>Имя: ${esc(currentUser.name)}</p><p>Email: ${esc(currentUser.email)}</p><p>Вещей в гардеробе: ${clothes.length}</p><button onclick="showPage('wardrobe')">Мой гардероб</button> <button onclick="logout()">Выйти</button></section>`;  
+ }  
+}  
+  
+function auth(e){  
+ e.preventDefault();  
+ const f=new FormData(e.target);  
+ const email=String(f.get("email")).trim().toLowerCase();  
+ const password=String(f.get("password"));  
+ if(page==="register"){  
+ const name=String(f.get("name")).trim();  
+ if(!name){alert("Введи имя.");return}  
+ if(users.some(u=>u.email===email)){alert("Этот email уже зарегистрирован. Войди в аккаунт.");return}  
+ users.push({name,email,password});  
+ save("closetUsers",users);  
+ currentUser={name,email};  
+ save("closetCurrentUser",currentUser);  
+ alert("Регистрация прошла успешно!");  
+ showPage("wardrobe");  
+ }else{  
+ const u=users.find(u=>u.email===email&&u.password===password);  
+ if(!u){alert("Неверный email или пароль.");return}  
+ currentUser={name:u.name,email:u.email};  
+ save("closetCurrentUser",currentUser);  
+ alert("Ты успешно вошла в аккаунт!");  
+ showPage("wardrobe");  
+ }  
+}  
+function logout(){  
+ currentUser=null;  
+ localStorage.removeItem("closetCurrentUser");  
+ showPage("home");  
+}  
+function favorite(id){  
+ if(!currentUser){alert("Сначала войди или зарегистрируйся.");showPage("login");return}  
+ const x=clothes.find(x=>x.id===id);  
+ if(x){x.favorite=!x.favorite;save("closetClothes",clothes);render()}  
+}  
+function removeItem(id){  
+ if(!confirm("Удалить эту вещь?"))return;  
+ clothes=clothes.filter(x=>x.id!==id);  
+ save("closetClothes",clothes);render();  
+}  
+function addItem(){  
+ if(!currentUser){showPage("login");return}  
+ const name=prompt("Название вещи:");  
+ if(!name||!name.trim())return;  
+ const category=prompt("Категория: Верх, Низ, Обувь или Аксессуары","Верх");  
+ if(!category||!category.trim())return;  
+ const color=prompt("Цвет вещи:","Бежевый");  
+ if(!color||!color.trim())return;  
+ const image=prompt("Ссылка на фотографию (можно оставить пустым):","");  
+ clothes.unshift({id:Date.now(),name:name.trim(),category:category.trim(),color:color.trim(),image:image&&image.trim()?image.trim():"https://placehold.co/500x600/e8dfd5/665c53?text=My+Clothing",favorite:false});  
+ save("closetClothes",clothes);render();  
+}  
+function filterItems(){  
+ const q=document.getElementById("search").value.toLowerCase();  
+ const c=document.getElementById("category").value;  
+ const filtered=clothes.filter(x=>(x.name+" "+x.color+" "+x.category).toLowerCase().includes(q)&&(c==="Все"||x.category===c));  
+ document.getElementById("clothingGrid").innerHTML=grid(filtered);  
+}  
+function details(id){  
+ const x=clothes.find(x=>x.id===id);  
+ if(x)alert("Название: "+x.name+"\nКатегория: "+x.category+"\nЦвет: "+x.color);  
+}  
+render();  
+</script>  </body>  
+</html>  
+Осыларды тусындыршы
